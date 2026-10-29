@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth'
+import ThemeToggle from './ThemeToggle'
 import Account from './pages/Account'
 import AuthForm from './pages/AuthForm'
 import Design from './pages/Design'
@@ -10,6 +11,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ThemeToggle />
         <main>
           <Routes>
             <Route path="/login" element={<AuthForm mode="login" />} />

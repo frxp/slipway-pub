@@ -32,11 +32,12 @@
   --text-lg: 22px;
   --text-xl: 30px;
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
+/* An explicit choice (data-theme) wins; otherwise follow the system. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --color-bg: #12161d;
     --color-surface: #1a2029;
     --color-text: #e6e9ef;
@@ -46,5 +47,19 @@
     --color-accent-text: #0b1220;
     --color-danger: #f97066;
     --color-success: #5fd18a;
+    color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #12161d;
+  --color-surface: #1a2029;
+  --color-text: #e6e9ef;
+  --color-text-muted: #9aa4b4;
+  --color-border: #2a313c;
+  --color-accent: #6ea2ff;
+  --color-accent-text: #0b1220;
+  --color-danger: #f97066;
+  --color-success: #5fd18a;
+  color-scheme: dark;
 }

@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /api
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directories: [/web, /e2e, /infra]
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directories: [/api, /web]
+    schedule:
+      interval: weekly

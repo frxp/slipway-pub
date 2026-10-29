@@ -15,6 +15,14 @@ class AuthTest extends TestCase
         $this->getJson('/api/health')->assertOk()->assertJson(['status' => 'ok']);
     }
 
+    public function test_responses_carry_security_headers(): void
+    {
+        $this->getJson('/api/health')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Referrer-Policy', 'no-referrer');
+    }
+
     public function test_user_can_register(): void
     {
         $response = $this->postJson('/api/register', [

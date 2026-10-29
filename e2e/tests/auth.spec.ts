@@ -113,3 +113,16 @@ test('reset a forgotten password through the emailed link', async ({ page, reque
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/\/account$/)
 })
+
+test('theme toggle switches and remembers the choice', async ({ page }) => {
+  await page.goto('/login')
+  const html = page.locator('html')
+
+  await page.getByRole('button', { name: 'Change theme' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  await page.getByRole('button', { name: 'Change theme' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+
+  await page.reload()
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+})
