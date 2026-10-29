@@ -1,7 +1,11 @@
+import createClient from 'openapi-fetch'
+import type { components, paths } from './schema'
+
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
-export type User = { id: number; name: string; email: string }
-export type AuthResponse = { user: User; token: string }
+export type User = components['schemas']['User']
+export type AuthResponse =
+  paths['/login']['post']['responses'][200]['content']['application/json']
 
 export class ApiError extends Error {
   errors: Record<string, string[]>
@@ -21,26 +25,41 @@ export function setToken(token: string | null) {
   else localStorage.removeItem('token')
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken()
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  })
-  const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new ApiError(body.message ?? 'Request failed', body.errors)
-  return body as T
+const client = createClient<paths>({ baseUrl: BASE })
+
+client.use({
+  onRequest({ request }) {
+    const token = getToken()
+    if (token) request.headers.set('Authorization', `Bearer ${token}`)
+    request.headers.set('Accept', 'application/json')
+    return request
+  },
+})
+
+function fail(error: unknown): never {
+  const body = (error ?? {}) as { message?: string; errors?: Record<string, string[]> }
+  throw new ApiError(body.message ?? 'Request failed', body.errors)
 }
 
 export const api = {
-  register: (data: { name: string; email: string; password: string }) =>
-    request<AuthResponse>('/register', { method: 'POST', body: JSON.stringify(data) }),
-  login: (data: { email: string; password: string }) =>
-    request<AuthResponse>('/login', { method: 'POST', body: JSON.stringify(data) }),
-  logout: () => request<{ message: string }>('/logout', { method: 'POST' }),
-  me: () => request<User>('/me'),
+  async register(body: { name: string; email: string; password: string }) {
+    const { data, error } = await client.POST('/register', { body })
+    if (!data) fail(error)
+    return data
+  },
+  async login(body: { email: string; password: string }) {
+    const { data, error } = await client.POST('/login', { body })
+    if (!data) fail(error)
+    return data
+  },
+  async logout() {
+    const { data, error } = await client.POST('/logout')
+    if (!data) fail(error)
+    return data
+  },
+  async me() {
+    const { data, error } = await client.GET('/me')
+    if (!data) fail(error)
+    return data
+  },
 }
