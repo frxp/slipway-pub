@@ -17,8 +17,16 @@ browser -> web (Vite, :5173) -> api (Laravel, :8000) -> SQLite
 - **Pinned CI actions.** Every third-party action is pinned to a full commit SHA, with the version in a comment.
 - **Plain CSS with tokens.** One stylesheet, colors as custom properties, light and dark themes.
 
+## Typed contract
+
+Laravel routes and `@response` annotations produce `api/openapi.json` (Scramble). `web/src/schema.d.ts` is generated from it, and `web/src/api.ts` uses it through `openapi-fetch`, so a changed response breaks the web build instead of the browser.
+
+## Tests
+
+Playwright drives the real stack (register, sign out, sign in, errors, route guard). CI starts Docker Compose and runs the same tests.
+
 ## Known gaps
 
-- No automated tests beyond Laravel's defaults.
-- Dev servers in the containers, not production images.
+- Few unit tests beyond Laravel's defaults.
 - No email verification, password reset or 2FA yet.
+- The AWS stack synthesizes in CI but has not been deployed.
