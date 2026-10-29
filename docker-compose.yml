@@ -1,0 +1,17 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      APP_URL: http://localhost:8000
+      WEB_URL: http://localhost:5173
+
+  web:
+    build: ./web
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    depends_on:
+      - api
