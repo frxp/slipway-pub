@@ -62,4 +62,14 @@ export const api = {
     if (!data) fail(error)
     return data
   },
+  async updateProfile(body: { name: string }) {
+    const { data, error } = await client.PATCH('/me', { body })
+    if (!data) fail(error)
+    return data
+  },
+  async changePassword(body: { current_password: string; password: string }) {
+    const { data, error } = await client.PUT('/me/password', { body })
+    if (!data) fail(error)
+    return data
+  },
 }

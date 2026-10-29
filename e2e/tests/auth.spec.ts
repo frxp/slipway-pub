@@ -44,3 +44,34 @@ test('design page lists the tokens', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Design tokens' })).toBeVisible()
   await expect(page.getByText('--color-accent')).toBeVisible()
 })
+
+test('change name and password', async ({ page }) => {
+  const email = `profile-${Date.now()}@example.com`
+
+  await page.goto('/register')
+  await page.getByLabel('Name').fill('Before')
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/account$/)
+
+  await page.getByLabel('Name').fill('After')
+  await page.getByRole('button', { name: 'Save name' }).click()
+  await expect(page.getByText('Name saved.')).toBeVisible()
+  await expect(page.getByRole('definition').filter({ hasText: 'After' })).toBeVisible()
+
+  await page.getByLabel('Current password').fill('wrong-password')
+  await page.getByLabel('New password').fill('new-password-1')
+  await page.getByRole('button', { name: 'Change password' }).click()
+  await expect(page.getByText(/password is incorrect/i)).toBeVisible()
+
+  await page.getByLabel('Current password').fill(password)
+  await page.getByRole('button', { name: 'Change password' }).click()
+  await expect(page.getByText('Password updated.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill('new-password-1')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/\/account$/)
+})

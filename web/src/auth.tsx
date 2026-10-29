@@ -6,6 +6,7 @@ type AuthState = {
   loading: boolean
   signIn: (res: AuthResponse) => void
   signOut: () => Promise<void>
+  setUser: (user: User) => void
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext value={{ user, loading, signIn, signOut }}>{children}</AuthContext>
+  return <AuthContext value={{ user, loading, signIn, signOut, setUser }}>{children}</AuthContext>
 }
 
 export function useAuth(): AuthState {

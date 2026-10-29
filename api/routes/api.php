@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => ['status' => 'ok']);
@@ -11,4 +12,6 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me', [ProfileController::class, 'update']);
+    Route::put('/me/password', [ProfileController::class, 'updatePassword'])->middleware('throttle:10,1');
 });
