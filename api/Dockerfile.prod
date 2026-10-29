@@ -1,0 +1,18 @@
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+
+FROM dunglas/frankenphp:1-php8.5-alpine
+WORKDIR /app
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative --no-interaction \
+    && cp -n .env.example .env \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && touch database/database.sqlite \
+    && chown -R www-data:www-data storage bootstrap/cache database
+ENV APP_ENV=production APP_DEBUG=false
+EXPOSE 8000
+CMD ["sh", "-c", "php artisan key:generate --force && php artisan migrate --force && php artisan config:cache && php artisan route:cache && frankenphp php-server --root /app/public --listen :8000"]

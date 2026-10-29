@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8000:8000"
+    environment:
+      APP_URL: http://localhost:8000
+      WEB_URL: http://localhost:8080
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
