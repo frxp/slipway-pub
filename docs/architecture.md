@@ -17,6 +17,10 @@ browser -> web (Vite, :5173) -> api (Laravel, :8000) -> SQLite
 - **Pinned CI actions.** Every third-party action is pinned to a full commit SHA, with the version in a comment.
 - **Plain CSS with tokens.** One stylesheet, colors as custom properties, light and dark themes.
 
+## Password reset
+
+`POST /api/forgot-password` always answers the same way, so it does not reveal which emails have accounts. The email link opens the SPA (`WEB_URL`), which posts the token to `/api/reset-password`. A successful reset revokes every token of the user. Locally, Mailpit catches the emails. Each auth route has its own named rate limiter, so one endpoint cannot use up another's budget.
+
 ## Typed contract
 
 Laravel routes and `@response` annotations produce `api/openapi.json` (Scramble). `web/src/schema.d.ts` is generated from it, and `web/src/api.ts` uses it through `openapi-fetch`, so a changed response breaks the web build instead of the browser.
@@ -27,6 +31,5 @@ Playwright drives the real stack (register, sign out, sign in, errors, route gua
 
 ## Known gaps
 
-- Few unit tests beyond Laravel's defaults.
-- No email verification, password reset or 2FA yet.
+- No email verification or 2FA yet.
 - The AWS stack synthesizes in CI but has not been deployed.

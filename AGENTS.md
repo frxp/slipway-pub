@@ -10,6 +10,7 @@ Laravel API in `api/`, React SPA in `web/`, Playwright tests in `e2e/`, AWS CDK 
 - Regenerate TypeScript types: `cd web && pnpm gen:api`
 - Web checks: `cd web && pnpm lint && pnpm build`
 - E2E (stack must be running): `cd e2e && pnpm test`
+- Emails sent locally appear in Mailpit at http://localhost:8025
 
 ## Rules
 

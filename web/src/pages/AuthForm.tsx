@@ -59,6 +59,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         {fieldError('password') && <span className="error">{fieldError('password')}</span>}
       </label>
       <button disabled={busy}>{isRegister ? 'Create account' : 'Sign in'}</button>
+      {!isRegister && (
+        <p className="muted">
+          <Link to="/forgot-password">Forgot password?</Link>
+        </p>
+      )}
       <p className="muted">
         {isRegister ? (
           <>

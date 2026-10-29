@@ -12,5 +12,6 @@ RUN composer dump-autoload --optimize --no-dev --no-interaction \
     && cp -n .env.example .env \
     && mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && touch database/database.sqlite
+# artisan serve drops the container environment, so the dev server runs php -S directly.
 EXPOSE 8000
-CMD ["sh", "-c", "php artisan key:generate --force && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]
+CMD ["sh", "-c", "php artisan key:generate --force && php artisan migrate --force && cd public && php -S 0.0.0.0:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]

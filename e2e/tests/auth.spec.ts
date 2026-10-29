@@ -75,3 +75,41 @@ test('change name and password', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/\/account$/)
 })
+
+test('reset a forgotten password through the emailed link', async ({ page, request }) => {
+  const email = `reset-${Date.now()}@example.com`
+  const mailpit = process.env.MAILPIT_URL ?? 'http://localhost:8025'
+
+  await page.goto('/register')
+  await page.getByLabel('Name').fill('Forgetful')
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+
+  await page.getByRole('link', { name: 'Forgot password?' }).click()
+  await expect(page.getByRole('heading', { name: 'Reset password' })).toBeVisible()
+  await page.getByLabel('Email').fill(email)
+  await expect(page.getByLabel('Email')).toHaveValue(email)
+  await page.getByRole('button', { name: 'Send reset link' }).click()
+  await expect(page.getByText(/reset link was sent/i)).toBeVisible()
+
+  let link = ''
+  await expect(async () => {
+    const list = await (await request.get(`${mailpit}/api/v1/search?query=to:${email}`)).json()
+    expect(list.messages_count).toBeGreaterThan(0)
+    const mail = await (await request.get(`${mailpit}/api/v1/message/${list.messages[0].ID}`)).json()
+    link = mail.Text.match(/https?:\/\/\S+\/reset-password\?\S+/)?.[0].replace(/&amp;/g, '&') ?? ''
+    expect(link).not.toBe('')
+  }).toPass()
+
+  await page.goto(link)
+  await page.getByLabel('New password').fill('reset-password-1')
+  await page.getByRole('button', { name: 'Reset password' }).click()
+  await expect(page).toHaveURL(/\/login$/)
+
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill('reset-password-1')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/\/account$/)
+})

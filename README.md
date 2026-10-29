@@ -20,6 +20,7 @@ docker compose up --build
 
 - API: http://localhost:8000/api/health
 - Web: http://localhost:5173
+- Mailpit (catches emails): http://localhost:8025
 
 ## API
 
@@ -30,6 +31,10 @@ docker compose up --build
 | POST | `/api/login` | no | sign in, returns token |
 | POST | `/api/logout` | token | revoke current token |
 | GET | `/api/me` | token | current user |
+| PATCH | `/api/me` | token | change name |
+| PUT | `/api/me/password` | token | change password, revokes other tokens |
+| POST | `/api/forgot-password` | no | email a reset link |
+| POST | `/api/reset-password` | no | set a new password with the emailed token |
 
 ## Commands
 

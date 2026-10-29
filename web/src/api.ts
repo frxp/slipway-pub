@@ -62,6 +62,16 @@ export const api = {
     if (!data) fail(error)
     return data
   },
+  async forgotPassword(body: { email: string }) {
+    const { data, error } = await client.POST('/forgot-password', { body })
+    if (!data) fail(error)
+    return data
+  },
+  async resetPassword(body: { token: string; email: string; password: string }) {
+    const { data, error } = await client.POST('/reset-password', { body })
+    if (!data) fail(error)
+    return data
+  },
   async updateProfile(body: { name: string }) {
     const { data, error } = await client.PATCH('/me', { body })
     if (!data) fail(error)
