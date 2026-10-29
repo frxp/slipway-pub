@@ -1,0 +1,6 @@
+# Install once per clone: lefthook install
+# Requires: lefthook, gitleaks
+pre-commit:
+  jobs:
+    - name: gitleaks
+      run: gitleaks git --pre-commit --staged --redact --no-banner
