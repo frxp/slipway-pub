@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -42,8 +43,22 @@ class ProfileTest extends TestCase
             'password' => 'new-password-1',
         ])->assertOk();
 
-        $this->assertDatabaseCount('personal_access_tokens', 1);
+        $this->assertDatabaseHas('personal_access_tokens', ['name' => 'current']);
+        $this->assertDatabaseMissing('personal_access_tokens', ['name' => 'other']);
         $this->assertTrue(Hash::check('new-password-1', $user->fresh()->password));
+    }
+
+    public function test_password_change_cancels_a_pending_reset_link(): void
+    {
+        $user = User::factory()->create(['password' => 'password123']);
+        $token = Password::createToken($user);
+
+        $this->withToken($user->createToken('spa')->plainTextToken)->putJson('/api/me/password', [
+            'current_password' => 'password123',
+            'password' => 'new-password-1',
+        ])->assertOk();
+
+        $this->assertFalse(Password::tokenExists($user, $token));
     }
 
     public function test_password_change_requires_the_current_password(): void

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class ProfileController extends Controller
 {
@@ -24,7 +24,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Change the password. All other tokens of the user are revoked.
+     * Change the password. Other tokens and any pending reset link stop working.
      *
      * @response array{message: string}
      */
@@ -32,13 +32,14 @@ class ProfileController extends Controller
     {
         $data = $request->validate([
             'current_password' => ['required', 'string', 'current_password:sanctum'],
-            'password' => ['required', 'string', 'min:8', 'different:current_password'],
+            'password' => [...User::PASSWORD_RULES, 'different:current_password'],
         ]);
 
         /** @var User $user */
         $user = $request->user();
-        $user->update(['password' => Hash::make($data['password'])]);
+        $user->update(['password' => $data['password']]);
         $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+        Password::deleteToken($user);
 
         return response()->json(['message' => 'Password updated.']);
     }

@@ -31,11 +31,13 @@ class PasswordResetTest extends TestCase
     public function test_unknown_email_gets_the_same_answer(): void
     {
         Notification::fake();
+        $user = User::factory()->create();
 
-        $this->postJson('/api/forgot-password', ['email' => 'nobody@example.com'])
-            ->assertOk()
-            ->assertJsonPath('message', 'If the account exists, a reset link was sent.');
-        Notification::assertNothingSent();
+        $known = $this->postJson('/api/forgot-password', ['email' => $user->email])->assertOk();
+        $unknown = $this->postJson('/api/forgot-password', ['email' => 'nobody@example.com'])->assertOk();
+
+        $this->assertSame($known->json(), $unknown->json());
+        Notification::assertSentTimes(ResetPassword::class, 1);
     }
 
     public function test_password_can_be_reset_with_a_valid_token(): void
@@ -54,14 +56,16 @@ class PasswordResetTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_reset_rejects_a_bad_token(): void
+    public function test_reset_rejects_a_bad_token_the_same_way_for_any_email(): void
     {
         $user = User::factory()->create();
 
-        $this->postJson('/api/reset-password', [
+        $responses = array_map(fn (string $email) => $this->postJson('/api/reset-password', [
             'token' => 'not-a-real-token',
-            'email' => $user->email,
+            'email' => $email,
             'password' => 'brand-new-pass',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['email']), [$user->email, 'nobody@example.com']);
+
+        $this->assertSame($responses[0]->json(), $responses[1]->json());
     }
 }

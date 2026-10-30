@@ -114,7 +114,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Email a reset link. The answer is the same whether or not the account exists */
+        /**
+         * Email a reset link. The answer is the same whether or not the account exists,
+         *     and the mail goes out after the response, so timing does not tell them apart
+         */
         post: operations["passwordReset.forgot"];
         delete?: never;
         options?: never;
@@ -146,7 +149,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Change the password. All other tokens of the user are revoked */
+        /** Change the password. Other tokens and any pending reset link stop working */
         put: operations["profile.updatePassword"];
         post?: never;
         delete?: never;
@@ -227,7 +230,7 @@ export interface operations {
             };
         };
         responses: {
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

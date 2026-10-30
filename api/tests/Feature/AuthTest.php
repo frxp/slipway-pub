@@ -76,6 +76,71 @@ class AuthTest extends TestCase
         $this->getJson('/api/me')->assertUnauthorized();
     }
 
+    public function test_guests_get_401_without_an_accept_header(): void
+    {
+        $this->get('/api/me')->assertUnauthorized();
+    }
+
+    public function test_email_is_not_case_sensitive(): void
+    {
+        $this->postJson('/api/register', [
+            'name' => 'Ada',
+            'email' => 'Ada@Example.com',
+            'password' => 'password123',
+        ])->assertCreated()->assertJsonPath('user.email', 'ada@example.com');
+
+        $this->postJson('/api/register', [
+            'name' => 'Ada again',
+            'email' => 'ADA@example.com',
+            'password' => 'password123',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
+
+        $this->postJson('/api/login', [
+            'email' => 'ADA@EXAMPLE.COM',
+            'password' => 'password123',
+        ])->assertOk();
+    }
+
+    public function test_non_string_email_is_a_validation_error(): void
+    {
+        $this->postJson('/api/login', ['email' => ['a'], 'password' => 'x'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+        $this->postJson('/api/forgot-password', ['email' => ['a']])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_password_must_fit_bcrypt(): void
+    {
+        foreach ([str_repeat('a', 73), "pass\x00word123"] as $password) {
+            $this->postJson('/api/register', [
+                'name' => 'Ada',
+                'email' => 'ada@example.com',
+                'password' => $password,
+            ])->assertUnprocessable()->assertJsonValidationErrors(['password']);
+        }
+    }
+
+    public function test_tokens_expire_and_login_removes_them(): void
+    {
+        $user = User::factory()->create(['password' => 'password123']);
+        $token = $user->issueToken();
+
+        $this->travel(config('sanctum.expiration') + 1)->minutes();
+
+        $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password123'])->assertOk();
+
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+        $this->assertNotSame(
+            explode('|', $token)[0],
+            (string) $user->tokens()->sole()->id,
+        );
+    }
+
     public function test_logout_revokes_the_token(): void
     {
         $user = User::factory()->create();
