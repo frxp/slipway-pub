@@ -2,8 +2,14 @@ vendor
 .env
 .env.*
 !.env.example
+.phpunit.result.cache
 storage/logs/*
 database/*.sqlite
 tests
 phpunit.xml
 openapi.json
+Dockerfile*
+.dockerignore
+.editorconfig
+.gitattributes
+.gitignore

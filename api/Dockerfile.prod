@@ -11,7 +11,10 @@ COPY --from=vendor /app/vendor ./vendor
 COPY . .
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative --no-interaction \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
-ENV APP_ENV=production APP_DEBUG=false
+    && chown -R www-data:www-data storage bootstrap/cache /data/caddy /config/caddy \
+    && echo 'expose_php = Off' > "$PHP_INI_DIR/conf.d/app.ini"
+ENV APP_ENV=production APP_DEBUG=false LOG_CHANNEL=stderr LOG_LEVEL=info MAIL_MAILER=smtp
+USER www-data
 EXPOSE 8000
-CMD ["sh", "-c", "php artisan key:generate --force && php artisan migrate --force && php artisan config:cache && php artisan route:cache && frankenphp php-server --root /app/public --listen :8000"]
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s CMD curl -fsS http://localhost:8000/api/health
+CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan route:cache && frankenphp php-server --root /app/public --listen :8000"]
