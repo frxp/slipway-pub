@@ -45,7 +45,9 @@
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ],
         "openapi": [
-            "@php -r \"touch('database/database.sqlite');\"",
+            "@putenv DB_CONNECTION=sqlite",
+            "@putenv DB_DATABASE=database/openapi.sqlite",
+            "@php -r \"touch('database/openapi.sqlite');\"",
             "@php artisan migrate --force --quiet",
             "@php artisan scramble:export --path=openapi.json"
         ]

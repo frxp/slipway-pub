@@ -1,4 +1,18 @@
 services:
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   api:
     build: ./api
     ports:
@@ -6,9 +20,13 @@ services:
     environment:
       APP_URL: http://localhost:8000
       WEB_URL: http://localhost:5173
+      DB_HOST: db
       MAIL_MAILER: smtp
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
+    depends_on:
+      db:
+        condition: service_healthy
 
   mailpit:
     image: axllent/mailpit:v1.32.0
@@ -23,3 +41,6 @@ services:
       VITE_API_URL: http://localhost:8000/api
     depends_on:
       - api
+
+volumes:
+  db:

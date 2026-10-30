@@ -1,4 +1,9 @@
 vendor
 .env
+.env.*
+!.env.example
 storage/logs/*
 database/*.sqlite
+tests
+phpunit.xml
+openapi.json
