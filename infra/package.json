@@ -1,6 +1,7 @@
 {
   "name": "slipway-infra",
   "private": true,
+  "packageManager": "pnpm@12.16.1",
   "type": "module",
   "scripts": {
     "synth": "cdk synth",
