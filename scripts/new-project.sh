@@ -18,22 +18,40 @@ if [ -e "$target" ]; then
 fi
 
 mkdir -p "$target"
-(cd "$root" && git ls-files -z | grep -zv '^scripts/new-project.sh$' | xargs -0 tar -cf -) | tar -xf - -C "$target"
+target="$(cd "$target" && pwd)"
+
+# A failed run leaves nothing behind, so it can simply be retried.
+created=""
+cleanup() { [ -n "$created" ] || rm -rf "$target"; }
+trap cleanup EXIT
+
+# Committed files only, so local edits stay out of the new project.
+git -C "$root" archive HEAD -- . ':(exclude)scripts/new-project.sh' | tar -xf - -C "$target"
 
 cd "$target"
 
-# Rename the project in the files that carry its name.
-sed_inplace() { if [ "$(uname)" = Darwin ]; then sed -i '' "$@"; else sed -i "$@"; fi; }
-sed_inplace "s/^# Slipway$/# $name/" README.md
-sed_inplace "s/\"slipway-e2e\"/\"$name-e2e\"/" e2e/package.json
-sed_inplace "s/\"name\": \"web\"/\"name\": \"$name-web\"/" web/package.json
-[ -f infra/package.json ] && sed_inplace "s/\"name\": \"slipway-infra\"/\"name\": \"$name-infra\"/" infra/package.json
+# my-app becomes MyApp for display names and the CloudFormation stack.
+title="$(echo "$name" | awk -F- '{ for (i = 1; i <= NF; i++) printf "%s%s", toupper(substr($i, 1, 1)), substr($i, 2) }')"
 
-cp api/.env.example api/.env
+sed_inplace() { if [ "$(uname)" = Darwin ]; then sed -i '' "$@"; else sed -i "$@"; fi; }
+
+# Rename the project in the files that carry its name.
+sed_inplace -e "s/^# Slipway$/# $title/" \
+  -e "s/^Starter kit for .*/A Laravel API and a React SPA./" \
+  -e "/new-project/d" README.md
+sed_inplace "s/\"slipway-e2e\"/\"$name-e2e\"/" e2e/package.json
+sed_inplace "s/\"slipway-web\"/\"$name-web\"/" web/package.json
+sed_inplace "s/\"slipway-infra\"/\"$name-infra\"/" infra/package.json
+sed_inplace "s/^APP_NAME=Slipway$/APP_NAME=$title/" api/.env.example
+sed_inplace "s/'Slipway'/'$title'/" api/config/app.php api/config/mail.php
+sed_inplace "s/\"title\": \"Slipway\"/\"title\": \"$title\"/" api/openapi.json
+sed_inplace "s/<title>Slipway<\/title>/<title>$title<\/title>/" web/index.html
+sed_inplace "s/SlipwayStack/${title}Stack/g" infra/bin/app.ts infra/lib/stack.ts
 
 git init -q -b main
 git add -A
 git commit -qm "init"
+created=1
 
 echo "Created $target"
 echo "Next: cd $target && docker compose up --build"
