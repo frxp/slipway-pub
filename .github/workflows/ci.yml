@@ -31,6 +31,8 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test
       - run: php artisan test
+      - name: Check that openapi.json is current
+        run: composer openapi && git diff --exit-code openapi.json
 
   web:
     runs-on: ubuntu-latest
@@ -49,6 +51,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm build
+      - name: Check that schema.d.ts is current
+        run: pnpm gen:api && git diff --exit-code src/schema.d.ts
 
   e2e:
     runs-on: ubuntu-latest
@@ -70,6 +74,12 @@ jobs:
         working-directory: e2e
       - run: pnpm test
         working-directory: e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-traces
+          path: e2e/test-results
+          retention-days: 7
 
   infra:
     runs-on: ubuntu-latest
