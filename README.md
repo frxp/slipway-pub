@@ -2,6 +2,8 @@
 
 Starter kit for products with a Laravel API and a React SPA. One command creates a renamed project with token auth, password reset, a typed API client, Docker, Playwright tests, CI and an AWS stack.
 
+To start a new project from this one, run `scripts/new-project.sh my-app`.
+
 ## Stack
 
 - **API:** Laravel 13, PHP 8.5, Sanctum token auth, PostgreSQL 18
@@ -49,16 +51,37 @@ APP_KEY="base64:$(openssl rand -base64 32)" docker compose -f docker-compose.pro
 
 Running the checks outside Docker takes PHP 8.5, Composer, Node 22 with Corepack (`corepack enable`), plus lefthook and gitleaks for the commit hook.
 
+Once per clone:
+
 ```
-lefthook install                                # once per clone: secret scan before each commit
-cd api && composer install                      # then: cp .env.example .env && php artisan key:generate
-cd api && php artisan test                      # unit and feature tests
-cd api && vendor/bin/pint                       # format PHP
-cd api && composer openapi                      # regenerate openapi.json
-cd web && pnpm gen:api                          # regenerate TypeScript types
-cd web && pnpm lint && pnpm build               # web checks
-cd e2e && pnpm test                             # end-to-end tests (stack running)
-scripts/new-project.sh my-app                   # start a new project from this one
+lefthook install        # scan for secrets before each commit
+cd api
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+In `api/`:
+
+```
+php artisan test        # unit and feature tests
+vendor/bin/pint         # format PHP
+composer openapi        # regenerate openapi.json
+```
+
+In `web/`:
+
+```
+pnpm install
+pnpm gen:api            # regenerate TypeScript types
+pnpm lint && pnpm build
+```
+
+In `e2e/`, with the stack running:
+
+```
+pnpm install
+pnpm test
 ```
 
 ## Layout
