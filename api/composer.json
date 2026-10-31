@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "frxp/slipway-api",
+    "name": "app/api",
     "type": "project",
-    "description": "Slipway API: Laravel with Sanctum token auth and a generated OpenAPI spec.",
+    "description": "Laravel API with Sanctum token auth and a generated OpenAPI spec.",
     "license": "MIT",
     "require": {
         "php": "^8.5",
