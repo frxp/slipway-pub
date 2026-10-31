@@ -1,18 +1,20 @@
 # Slipway
 
-Starter kit for a Laravel API plus a React SPA, with Docker and CI.
+Starter kit for products with a Laravel API and a React SPA. One command creates a renamed project with token auth, password reset, a typed API client, Docker, Playwright tests, CI and an AWS stack.
 
 ## Stack
 
-- **API:** Laravel 13, PHP 8.5, Sanctum token auth, SQLite
+- **API:** Laravel 13, PHP 8.5, Sanctum token auth, PostgreSQL 18
 - **Web:** React 19, TypeScript, Vite, React Router
-- **Local stack:** Docker Compose; production images (FrankenPHP, nginx)
-- **Types:** OpenAPI spec from Laravel (Scramble), typed TypeScript client
-- **Tests:** Playwright end-to-end
-- **Infra:** AWS CDK (S3 + CloudFront, ECS Fargate)
+- **Containers:** Docker Compose for local work; production images on FrankenPHP and nginx
+- **Contract:** OpenAPI spec from Laravel (Scramble), typed TypeScript client
+- **Tests:** PHPUnit unit and feature tests, Playwright end-to-end tests
+- **Infra:** AWS CDK (CloudFront, S3, ECS Fargate, RDS)
 - **CI:** GitHub Actions, actions pinned to commit SHAs
 
 ## Run
+
+Docker is all you need.
 
 ```
 docker compose up --build
@@ -20,7 +22,14 @@ docker compose up --build
 
 - API: http://localhost:8000/api/health
 - Web: http://localhost:5173
+- Design tokens: http://localhost:5173/_design
 - Mailpit (catches emails): http://localhost:8025
+
+To run the production images (API on `:8000`, web on `:8080`):
+
+```
+APP_KEY="base64:$(openssl rand -base64 32)" docker compose -f docker-compose.prod.yml up --build
+```
 
 ## API
 
@@ -36,25 +45,28 @@ docker compose up --build
 | POST | `/api/forgot-password` | no | email a reset link |
 | POST | `/api/reset-password` | no | set a new password with the emailed token |
 
-## Commands
+## Development
+
+Running the checks outside Docker takes PHP 8.5, Composer, Node 22 with Corepack (`corepack enable`), plus lefthook and gitleaks for the commit hook.
 
 ```
-docker compose up --build                       # dev stack
-docker compose -f docker-compose.prod.yml up    # production images
+lefthook install                                # once per clone: secret scan before each commit
+cd api && composer install                      # then: cp .env.example .env && php artisan key:generate
+cd api && php artisan test                      # unit and feature tests
+cd api && vendor/bin/pint                       # format PHP
 cd api && composer openapi                      # regenerate openapi.json
 cd web && pnpm gen:api                          # regenerate TypeScript types
+cd web && pnpm lint && pnpm build               # web checks
 cd e2e && pnpm test                             # end-to-end tests (stack running)
 scripts/new-project.sh my-app                   # start a new project from this one
 ```
-
-The design tokens are on http://localhost:5173/_design.
 
 ## Layout
 
 - `api/` Laravel application
 - `web/` React application
 - `e2e/` Playwright tests
-- `infra/` AWS CDK stack
+- `infra/` AWS CDK stack, see [infra/README.md](infra/README.md)
 - `scripts/new-project.sh` project generator
 - `docs/architecture.md` design notes
-- `.github/workflows/ci.yml` API tests, web lint and build, E2E, CDK synth
+- `.github/workflows/ci.yml` API tests, web lint and build, contract checks, E2E, CDK synth
