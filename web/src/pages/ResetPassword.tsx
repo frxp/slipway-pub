@@ -1,13 +1,13 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { api, ApiError } from '../api'
+import { api, toApiError, type ApiError } from '../api'
 
 export default function ResetPassword() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [error, setError] = useState<ApiError | null>(null)
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     const password = String(new FormData(e.currentTarget).get('password'))
     setError(null)
@@ -17,9 +17,9 @@ export default function ResetPassword() {
         email: params.get('email') ?? '',
         password,
       })
-      navigate('/login')
+      navigate('/login', { state: { notice: 'Password reset. Sign in with the new password.' } })
     } catch (err) {
-      setError(err instanceof ApiError ? err : new ApiError('Something went wrong'))
+      setError(toApiError(err))
     }
   }
 

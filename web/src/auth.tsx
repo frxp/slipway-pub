@@ -1,32 +1,35 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api, getToken, setToken, type AuthResponse, type User } from './api'
-
-type AuthState = {
-  user: User | null
-  loading: boolean
-  signIn: (res: AuthResponse) => void
-  signOut: () => Promise<void>
-  setUser: (user: User) => void
-}
-
-const AuthContext = createContext<AuthState | null>(null)
+import { useEffect, useState, type ReactNode } from 'react'
+import {
+  api,
+  getToken,
+  setToken,
+  setUnauthorizedHandler,
+  toApiError,
+  type AuthResponse,
+  type User,
+} from './api'
+import { AuthContext } from './useAuth'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(Boolean(getToken()))
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null))
     if (!getToken()) return
     api
       .me()
       .then(setUser)
-      .catch(() => setToken(null))
+      // api.ts drops the token on a 401. Any other failure keeps it for the next reload.
+      .catch((err) => setLoadFailed(toApiError(err).status !== 401))
       .finally(() => setLoading(false))
   }, [])
 
   const signIn = (res: AuthResponse) => {
     setToken(res.token)
     setUser(res.user)
+    setLoadFailed(false)
   }
 
   const signOut = async () => {
@@ -35,11 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext value={{ user, loading, signIn, signOut, setUser }}>{children}</AuthContext>
-}
-
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
-  return ctx
+  return (
+    <AuthContext value={{ user, loading, loadFailed, signIn, signOut, setUser }}>
+      {children}
+    </AuthContext>
+  )
 }

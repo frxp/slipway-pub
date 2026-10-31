@@ -18,7 +18,7 @@ export default function App() {
             <Route path="/register" element={<AuthForm mode="register" />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/_design" element={<Design />} />
+            {import.meta.env.DEV && <Route path="/_design" element={<Design />} />}
             <Route path="/account" element={<Account />} />
             <Route path="*" element={<Navigate to="/account" replace />} />
           </Routes>

@@ -1,16 +1,19 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { api, ApiError } from '../api'
-import { useAuth } from '../auth'
+import { useState, type SubmitEvent } from 'react'
+import { Link, Navigate, useLocation } from 'react-router-dom'
+import { api, toApiError, type ApiError } from '../api'
+import { useAuth } from '../useAuth'
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const isRegister = mode === 'register'
-  const { signIn } = useAuth()
-  const navigate = useNavigate()
+  const { user, loading, signIn } = useAuth()
+  const notice = (useLocation().state as { notice?: string } | null)?.notice
   const [error, setError] = useState<ApiError | null>(null)
   const [busy, setBusy] = useState(false)
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  if (loading) return <p className="muted">Loading…</p>
+  if (user) return <Navigate to="/account" replace />
+
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
     const email = String(form.get('email'))
@@ -18,13 +21,13 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     setBusy(true)
     setError(null)
     try {
-      const res = isRegister
-        ? await api.register({ name: String(form.get('name')), email, password })
-        : await api.login({ email, password })
-      signIn(res)
-      navigate('/account')
+      signIn(
+        isRegister
+          ? await api.register({ name: String(form.get('name')), email, password })
+          : await api.login({ email, password }),
+      )
     } catch (err) {
-      setError(err instanceof ApiError ? err : new ApiError('Something went wrong'))
+      setError(toApiError(err))
     } finally {
       setBusy(false)
     }
@@ -35,6 +38,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   return (
     <form className="card" onSubmit={onSubmit}>
       <h1>{isRegister ? 'Create account' : 'Sign in'}</h1>
+      {notice && <span className="success">{notice}</span>}
       {isRegister && (
         <label>
           Name
@@ -59,6 +63,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         {fieldError('password') && <span className="error">{fieldError('password')}</span>}
       </label>
       <button disabled={busy}>{isRegister ? 'Create account' : 'Sign in'}</button>
+      {error && !error.hasFieldErrors && <span className="error">{error.message}</span>}
       {!isRegister && (
         <p className="muted">
           <Link to="/forgot-password">Forgot password?</Link>
