@@ -5,11 +5,13 @@ const colors = [
   'text-muted',
   'border',
   'accent',
+  'accent-text',
   'danger',
+  'danger-text',
   'success',
 ]
 
-const sizes = ['sm', 'base', 'lg', 'xl']
+const sizes = ['sm', 'label', 'base', 'md', 'lg', 'xl']
 
 export default function Design() {
   return (
